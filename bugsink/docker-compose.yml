@@ -1,0 +1,57 @@
+services:
+  web:
+    image: bugsink/bugsink
+    restart: unless-stopped
+    environment:
+      - 'SECRET_KEY=${SERVICE_PASSWORD_64_BUGSINK}'
+      - 'CREATE_SUPERUSER=admin:$SERVICE_PASSWORD_BUGSINK'
+      - SERVICE_FQDN_BUGSINK_8000
+      - 'DATABASE_URL=mysql://${SERVICE_USER_BUGSINK}:${SERVICE_PASSWORD_BUGSINK}@mysql_server:3307/${MYSQL_DATABASE:-bugsink}'
+      - BEHIND_HTTPS_PROXY=true
+      - BASE_URL=$BASE_URL
+      - SITE_TITLE="BugSink Error Tracker"
+
+      # Email config
+      - EMAIL_HOST=host.docker.internal
+      - EMAIL_PORT=${EMAIL_PORT}
+      - 'EMAIL_HOST_USER=${SERVICE_USER_BUGSINK}'
+      - 'EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}'
+      - EMAIL_USE_TLS=False
+      - 'DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}'
+
+    depends_on:
+      - mysql_server
+
+    volumes:
+      - bugsink_data:/app/data
+      - bugsink-media:/app/media
+      - bugsink-logs:/app/logs
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c "import requests; requests.get('http://localhost:8000/').raise_for_status()"
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bugsink.rule=Host(`${SERVICE_URL_WEB}`)"
+      - "traefik.http.routers.bugsink.entrypoints=websecure"
+      - "traefik.http.services.bugsink.loadbalancer.server.port=8000"
+
+    networks:
+      - traefik_proxy
+      - mysql_net
+
+volumes:
+  bugsink_data:
+  bugsink-media:
+  bugsink-logs:
+
+networks:
+  proxy:
+    external: true
+  mysql_net:
+    external: true

@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  uptime:
+    image: louislam/uptime-kuma:latest
+    restart: unless-stopped
+    volumes:
+      - uptime_data:/app/data
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime.rule=Host(`${SERVICE_URL_WEB}`)"
+      - "traefik.http.routers.uptime.entrypoints=websecure"
+      - "traefik.http.services.uptime.loadbalancer.server.port=3001"
+
+    networks:
+      - traefik_proxy
+
+volumes:
+  uptime_data:
+
+networks:
+  traefik_proxy:
+    external: true
