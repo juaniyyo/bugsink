@@ -35,7 +35,7 @@ services:
       - EMAIL_HOST_USER=bugsink_user
       - EMAIL_HOST_PASSWORD=bugsinkpwd
       - EMAIL_USE_TLS=False
-      - DEFAULT_FROM_EMAIL="soporte@icloudcompliance.com"
+      - DEFAULT_FROM_EMAIL="email@example.com"
     depends_on:
       mysql:
         condition: service_healthy
